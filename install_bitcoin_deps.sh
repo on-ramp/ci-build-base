@@ -5,7 +5,7 @@ cd secp256k1
 
 sudo ./autogen.sh
 
-sudo ./configure
+sudo ./configure --prefix=/usr
 
 sudo make
 
