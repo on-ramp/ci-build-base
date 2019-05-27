@@ -11,7 +11,9 @@ RUN sudo sh /opt/ci-base/install_haskell.sh
 COPY install_bitcoin_deps.sh .
 RUN sudo sh /opt/ci-base/install_bitcoin_deps.sh
 
+COPY clean.sh /opt
+RUN sudo sh /opt/clean.sh
 
-RUN sudo rm -rf /opt/ci-base/*
+WORKDIR /opt 
 
 

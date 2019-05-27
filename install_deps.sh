@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo apt -y update && sudo apt -y install libpq-dev autoconf autogen libtool make
+sudo apt-get update -y && sudo apt-get install -y libpq-dev autoconf autogen libtool make g++ libffi-dev libgmp-dev 

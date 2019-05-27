@@ -1,13 +1,13 @@
 #!/bin/bash
-git clone https://github.com/bitcoin-core/secp256k1.git
+sudo git clone https://github.com/bitcoin-core/secp256k1.git
 
 cd secp256k1
 
-./autogen.sh
+sudo ./autogen.sh
 
-./configure
+sudo ./configure
 
-make
+sudo make
 
 sudo make install
 
