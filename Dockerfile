@@ -6,7 +6,7 @@
 # with c libraries (e.g. hookup depends on openssl and
 # it was impossible to build the project using the previous
 # image).
-FROM fpco/stack-build:lts-13.20 as base
+FROM fpco/stack-build:lts-14.5 as base
 
 WORKDIR /opt/ci-base
 
