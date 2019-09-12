@@ -6,7 +6,9 @@
 # with c libraries (e.g. hookup depends on openssl and
 # it was impossible to build the project using the previous
 # image).
-FROM fpco/stack-build:lts-14.5 as base
+ARG lts_version
+
+FROM fpco/stack-build:$lts_version as base
 
 WORKDIR /opt/ci-base
 
