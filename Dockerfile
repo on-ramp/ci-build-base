@@ -15,18 +15,8 @@ WORKDIR /opt/ci-base
 COPY install_deps.sh .
 RUN sudo sh /opt/ci-base/install_deps.sh
 
-# Haskell is already installed on this base image
-#
-#COPY install_haskell.sh .
-#RUN sudo sh /opt/ci-base/install_haskell.sh
-
 COPY install_bitcoin_deps.sh .
 RUN sudo sh /opt/ci-base/install_bitcoin_deps.sh
-
-# Openssl is already installed on this base image
-#
-#COPY install_openssl.sh .
-#RUN sudo sh /opt/ci-base/install_openssl.sh
 
 COPY clean.sh /opt
 RUN sudo sh /opt/clean.sh
