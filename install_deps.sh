@@ -6,5 +6,6 @@ apt-get update -y && \
             libssl-dev \
             libsecp256k1-dev \
             ssh \
-            git
+            git \
+            curl
 
