@@ -7,5 +7,6 @@ apt-get update -y && \
             libsecp256k1-dev \
             ssh \
             git \
-            curl
+            curl \
+            gpg
 
