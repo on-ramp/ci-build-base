@@ -15,6 +15,9 @@ WORKDIR /opt/ci-base
 COPY install_deps.sh .
 RUN sh /opt/ci-base/install_deps.sh
 
+COPY install_kustomize.sh .
+RUN sh /opt/ci-base/install_kustomize.sh
+
 COPY clean.sh /opt
 RUN sh /opt/clean.sh
 
