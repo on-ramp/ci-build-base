@@ -8,5 +8,6 @@ apt-get update -y && \
             ssh \
             git \
             curl \
-            gpg
+            gpg \
+            jq
 
