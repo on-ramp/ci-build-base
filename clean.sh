@@ -1,3 +1,4 @@
 #!/bin/bash
 rm -rf /var/lib/apt/lists/*
-rm -rf /opt/ci-base
+[ -d /opt/ci-base ] && rm -rf /opt/ci-base || true
+[ -d /opt/ci-base-haskell ] && rm -rf /opt/ci-base-haskell || true

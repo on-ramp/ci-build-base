@@ -13,4 +13,6 @@ RUN sh /opt/ci-base-haskell/install_postgresql_deps.sh
 COPY install_pgquarrel.sh .
 RUN sh /opt/ci-base-haskell/install_pgquarrel.sh
 
+RUN sh /opt/clean.sh
+
 WORKDIR /opt
