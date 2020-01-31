@@ -1,0 +1,16 @@
+ARG lts_version
+
+FROM coinweb/base-stack:$lts_version
+
+WORKDIR /opt/ci-base-haskell
+
+COPY add_postgresql_source.sh .
+RUN sh /opt/ci-base-haskell/add_postgresql_source.sh -y
+
+COPY install_postgresql_deps.sh .
+RUN sh /opt/ci-base-haskell/install_postgresql_deps.sh
+
+COPY install_pgquarrel.sh .
+RUN sh /opt/ci-base-haskell/install_pgquarrel.sh
+
+WORKDIR /opt
