@@ -1,14 +1,32 @@
-#!/bin/bash
+#!/bin/bash -eu
 
-if [[ $# -lt 2 ]]
+usage () {
+  echo "Usage: $0 NAME VERSION"
+  echo ""
+  echo "Arguments:"
+  echo "  NAME          base-stack|ci-build-base"
+  echo "  VERSION       target tag, e.g. lts-14.5"
+}
+
+[[ $# -eq 2 ]] || { usage; exit 1; }
+
+ARG_NAME="$1"
+ARG_TAG="$2"
+
+if ! [[ "$ARG_NAME" =~ ^base-stack|ci-build-base$ ]]
 then
-  echo "Usage: ./build_and_push.sh name (base-stack or ci-build-base) version (e.g. lts-14.5)"
-elif [[ $1 == "base-stack" ]] || [[ $1 == "ci-build-base" ]]
-then
-  echo "coinweb/$1:$2"
-  docker build -t coinweb/$1:$2 -f Dockerfile.$1 --build-arg lts_version=$2 .
-	docker push coinweb/$1:$2
-else
   echo "Name should be either base-stack or ci-build-base"
+  exit 1
 fi
 
+#------------------------------------------------------------------------------#
+
+IMGFULL="coinweb/$ARG_NAME:$ARG_TAG"
+echo "Building $IMGFULL"
+set -x
+docker build \
+    -f "Dockerfile.$ARG_NAME" \
+    --build-arg lts_version="$ARG_TAG" \
+    -t "$IMGFULL" \
+    .
+docker push "$IMGFULL"
