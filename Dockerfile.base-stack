@@ -10,16 +10,26 @@ ARG lts_version
 
 FROM fpco/stack-build-small:$lts_version as base
 
-WORKDIR /opt/ci-base
+#-- install basic deps
+RUN apt-get update -y && \
+    apt-get install -yq --no-install-recommends \
+      libpq-dev \
+      liblzma-dev \
+      libssl-dev \
+      libsecp256k1-dev \
+      ssh \
+      git \
+      curl \
+      gpg \
+      jq \
+    ; rm -rf /var/cache/apt/lists
 
-COPY install_deps.sh .
-RUN sh /opt/ci-base/install_deps.sh
-
-COPY install_kustomize.sh .
-RUN sh /opt/ci-base/install_kustomize.sh
-
-COPY clean.sh /opt
-RUN sh /opt/clean.sh
+#-- install Kustomize
+WORKDIR /usr/local/bin
+# hadolint ignore=DL4006
+RUN export URL="https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"; \
+    curl -fsSL "$URL" | bash; \
+    kustomize version
 
 WORKDIR /opt
 

@@ -2,17 +2,22 @@ ARG lts_version
 
 FROM coinweb/base-stack:$lts_version
 
-WORKDIR /opt/ci-base-haskell
+WORKDIR /opt/ci-base
 
 COPY add_postgresql_source.sh .
-RUN sh /opt/ci-base-haskell/add_postgresql_source.sh -y
+RUN sh add_postgresql_source.sh -v 11
 
-COPY install_postgresql_deps.sh .
-RUN sh /opt/ci-base-haskell/install_postgresql_deps.sh
+RUN apt-get update -y && \
+    apt-get install -yq --no-install-recommends \
+        cmake \
+        postgresql-server-dev-11 \
+    ; rm -rf /var/cache/apt/lists
 
 COPY install_pgquarrel.sh .
 RUN sh /opt/ci-base-haskell/install_pgquarrel.sh
 
-RUN sh /opt/clean.sh
+#-- cleanup
+RUN rm -rf /opt/ci-base || true \
+    ;
 
 WORKDIR /opt
