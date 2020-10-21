@@ -4,7 +4,7 @@ usage () {
   echo "Usage: $0 NAME VERSION"
   echo ""
   echo "Arguments:"
-  echo "  NAME          base-stack|ci-build-base"
+  echo "  NAME          base-stack|ci-build-base|stacktastic-build"
   echo "  VERSION       target tag, e.g. lts-14.5"
 }
 
@@ -13,9 +13,9 @@ usage () {
 ARG_NAME="$1"
 ARG_TAG="$2"
 
-if ! [[ "$ARG_NAME" =~ ^base-stack|ci-build-base$ ]]
+if ! [[ "$ARG_NAME" =~ ^base-stack|ci-build-base|stacktastic-build$ ]]
 then
-  echo "Name should be either base-stack or ci-build-base"
+  echo "Unrecognized image flavor"
   exit 1
 fi
 
