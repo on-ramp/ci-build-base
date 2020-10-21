@@ -1,36 +1,103 @@
-# In the past we used to depend on:
-#   circleci/buildpack-deps:trusty-curl
-#
-# The main reason to change the base image was that
-# the distribution conflicted with GHC linking phase
-# with c libraries (e.g. hookup depends on openssl and
-# it was impossible to build the project using the previous
-# image).
-ARG lts_version
+#-- Haskell Stack non-privileged (rootless) builder image.
+#--
+#-- Installs Stack from official signed binary,
+#--   then GHC from FPCO bindist (via stack setup).
+#--
+#-- Preconfigured to produce static binaries.
+#--
+#-- Usage:
+#--   docker build \
+#--     -t coinweb/base-stack:lts-16.19 \
+#--     --build-arg STACK_RESOLVER=lts-16.19 \
+#--     Dockerfile.base-stack
 
-FROM fpco/stack-build-small:$lts_version as base
+# Focal Fossa == 20.04 LTS
+FROM ubuntu:focal
+
+LABEL vendor="Coinweb Ltd."
 
 #-- install basic deps
 RUN apt-get update -y && \
     apt-get install -yq --no-install-recommends \
-      libpq-dev \
-      liblzma-dev \
-      libssl-dev \
-      libsecp256k1-dev \
-      ssh \
-      git \
+      ca-certificates \
       curl \
-      gpg \
+      gcc \
+      git \
+      gnupg \
       jq \
+      libc-dev \
+      libgmp-dev \
+      liblzma-dev \
+      libpq-dev \
+      libsecp256k1-dev \
+      libssl-dev \
+      make \
+      perl \
+      ssh \
+      sudo \
+      xz-utils \
     ; rm -rf /var/cache/apt/lists
+    # [+253 MiB]
+
+#-- install Stack
+ARG STACK_VERSION=2.5.1
+ARG STACK_RESOLVER=lts-16.19
+ENV STACK_BIN=https://github.com/commercialhaskell/stack/releases/download/v${STACK_VERSION}/stack-${STACK_VERSION}-linux-x86_64-bin
+WORKDIR /usr/local/share
+COPY stack-${STACK_VERSION}-linux-x86_64-bin.sha256 \
+     stack-${STACK_VERSION}-linux-x86_64-bin.asc \
+     GPG-KEY-575159689BEFB442-dev@fpcomplete \
+     ./
+# hadolint ignore=DL4006
+RUN curl -fsSL "$STACK_BIN" -o ${STACK_BIN##*/} && \
+    sha256sum -c stack-*-linux-x86_64-bin.sha256 >&2 && \
+    gpg -q --import GPG-KEY-* && \
+    printf "trust\n5\ny\n" | gpg --command-fd 0 --no-tty --edit-key 575159689BEFB442 2>/dev/null && \
+    gpg --verify stack-*-linux-x86_64-bin.asc && \
+    rm -rf ~/.gnupg && \
+    mv -v stack-*-linux-x86_64-bin /usr/local/bin/stack && \
+    chmod 755 /usr/local/bin/stack && \
+    echo "stack binary verified and installed." >&2 && \
+    stack --version
+    # [+60 MiB]
 
 #-- install Kustomize
-WORKDIR /usr/local/bin
 # hadolint ignore=DL4006
 RUN export URL="https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"; \
-    curl -fsSL "$URL" | bash; \
+    ( cd /usr/local/bin && curl -fsSL "$URL" | bash; ); \
     kustomize version
 
-WORKDIR /opt
+#-- drop root
+# hadolint ignore=SC2016
+RUN adduser --disabled-password --uid 1000 --system builder && \
+    echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/enable-builder-sudo && \
+    chmod 0440 /etc/sudoers.d/enable-builder-sudo && \
+    echo 'test -d "$HOME/bin" && [ "${PATH#*$HOME/bin}" == "$PATH" ] && export PATH="$PATH:$HOME/bin"' > /etc/profile.d/add-home-bin-to-PATH.sh && \
+    echo 'export PATH="$PATH:$(stack path --compiler-bin)"' > /etc/profile.d/add-stack-ghc-to-PATH.sh && \
+    :
+USER builder
+WORKDIR /home/builder
 
+#-- configure Stack, pull a GHC, strip it down [+1.34 GiB]
+COPY stack-config.yaml /tmp/
+RUN install -Dm644 /tmp/stack-config.yaml /home/builder/.stack/config.yaml && \
+    stack setup \
+        --install-ghc \
+        --resolver=$STACK_RESOLVER \
+        $GHC_VERSION \
+        ; success=$?; \
+    rm -rf ~/.stack/programs/*/ghc-*.tar.xz \
+           ~/.stack/programs/*/ghc-*/share/doc \
+        ; \
+    strip ~/.stack/programs/*/ghc-*/lib/ghc-*/bin/* \
+        ; \
+    exit $success
 
+#-- almost done; pre-download snapshot index for speed [+1.29 GiB]
+RUN stack update
+
+#-- add correctly permissioned volumes for host code & build outputs
+RUN mkdir -v src bin
+VOLUME /home/builder/src
+VOLUME /home/builder/bin
+WORKDIR /home/builder/src

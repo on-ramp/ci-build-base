@@ -26,7 +26,7 @@ echo "Building $IMGFULL"
 set -x
 docker build \
     -f "Dockerfile.$ARG_NAME" \
-    --build-arg lts_version="$ARG_TAG" \
+    --build-arg STACK_RESOLVER="$ARG_TAG" \
     -t "$IMGFULL" \
     .
 docker push "$IMGFULL"

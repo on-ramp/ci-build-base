@@ -1,6 +1,6 @@
-ARG lts_version
+ARG STACK_RESOLVER
 
-FROM coinweb/base-stack:$lts_version
+FROM coinweb/base-stack:$STACK_RESOLVER
 
 WORKDIR /opt/ci-base
 
