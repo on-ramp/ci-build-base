@@ -107,8 +107,9 @@ RUN \
 #-- almost done; pre-download snapshot index for speed [+1.29 GiB]
 RUN stack update
 
-#-- add correctly permissioned volumes for host code & build outputs
+#-- add correctly permissioned volumes for host code, build outputs, build cache
 RUN mkdir -v src bin
 VOLUME /home/builder/src
 VOLUME /home/builder/bin
+VOLUME /home/builder/.stack/snapshots
 WORKDIR /home/builder/src
