@@ -3,19 +3,23 @@ install-ghc: false
 
 local-bin-path: /home/builder/bin
 
-ghc-options:
-  $locals: -Wall
-  $targets: -Werror
-  $everything: -static -optl-static
-apply-ghc-options: everything
+#ghc-options:
+#  $locals: -w
+#  $targets: -Wall
+#  $everything: -static -optl-static
+#apply-ghc-options: everything
+
 configure-options:
   $everything:
-    - --disable-shared
     - --enable-static
     - --disable-executable-dynamic
     - --enable-executable-static
 
-build: { split-objs: true }
+#-- supposed to link smaller binaries, but actually gives
+#-- "Argument list is too long" errors. experimental feature :/
+#build: { split-objs: true }
+
+hide-th-loading: false
 
 #-- Override from commandline if needed. Rationale: on CI, $ncpus is often
 #-- ridiculously large (32+) but RAM is severely limited. And GHC loves RAM.

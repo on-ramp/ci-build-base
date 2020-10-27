@@ -1,18 +1,31 @@
-# ci-build-base docker image
+# Haskell Stack building images
 
-Docker Image based on `circleci/buildpack-deps:trusty-curl` image, which add the following libraries:
+There're 3 Docker Images here:
 
-- libpq-dev
-- secp256k1 Build based on Source Code
-- openssl
+ - `coinweb/base-stack`
+ - `coinweb/ci-build-base`
+ - `coinweb/stacktastic-build`
 
-## Versions
+`ci-build-base` is `FROM` the `base-stack` and is used on CI.
 
-Ideally all tags/versions we generate for this image should follow the same versioning that stack, which is lts-VersionNumber. This is because this base image is strongly tie to Stack LTS versions.
+`stacktastic-build` is a rewritten version of `base-stack` aiming at two goals:
+unprivileged (rootless) build container, and fully static output binaries
+("-tastic" is anagram of "static"). The latter goal seems not achievable with
+GHC 8.6.5 (released Apr 24 2019), and is awaiting GHC upgrade.
 
+All images are tagged with Stack Resolver version; e.g. `coinweb/stacktastic-build:lts-16.19` would be configured with [LTS Haskell 16.19][].
 
-## How to push a new image to Dockerhub
+[LTS Haskell 16.19]: https://www.stackage.org/lts-16.19
 
-- Run `$ ./build_and_push version` (requires user to have write access to dockerhub organization)
+In addition to Stack, the images have native compilation dependencies:
+
+ - libpq-dev
+ - openssl
+ - pkg-config
+ - secp256k1
+
+## How to use
+
+- Run `./build_and_push version` (requires user to have write access to dockerhub organization)
 - Don't forget to change the version on `.circleci/config.yml`
 
