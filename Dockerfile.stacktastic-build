@@ -11,10 +11,15 @@
 #--     --build-arg STACK_RESOLVER=lts-16.19 \
 #--     Dockerfile.stacktastic-build
 
-# Focal Fossa == 20.04 LTS
-FROM ubuntu:focal
+# Buster == 10.6, current stable in 2020
+FROM debian:buster
+
+# NOTE on Ubuntu (only), there're issues like this:
+#   https://github.com/finkel-lang/finkel/issues/2
 
 LABEL vendor="Coinweb Ltd."
+
+ENV LC_ALL=C.UTF-8
 
 #-- install basic deps
 RUN apt-get update -y && \
@@ -33,9 +38,11 @@ RUN apt-get update -y && \
       libssl-dev \
       make \
       perl \
+      pkg-config \
       ssh \
       sudo \
       xz-utils \
+      zlib1g-dev \
     ; rm -rf /var/cache/apt/lists
     # [+253 MiB]
 
