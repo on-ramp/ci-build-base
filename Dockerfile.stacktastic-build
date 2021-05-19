@@ -102,13 +102,17 @@ RUN \
     if stack path --compiler-exe | grep -q 'ghc-8.6.5$'; then \
         sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
     fi && \
+    if stack path --compiler-exe | grep -q 'ghc-8.10.4$'; then \
+        sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
+    fi && \
     exit $success
 
 #-- almost done; pre-download snapshot index for speed [+1.29 GiB]
 RUN stack update
 
-#-- add correctly permissioned volumes for host code & build outputs
+#-- add correctly permissioned volumes for host code, build outputs, build cache
 RUN mkdir -v src bin
 VOLUME /home/builder/src
 VOLUME /home/builder/bin
+VOLUME /home/builder/.stack/snapshots
 WORKDIR /home/builder/src
