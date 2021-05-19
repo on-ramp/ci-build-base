@@ -102,6 +102,9 @@ RUN \
     if stack path --compiler-exe | grep -q 'ghc-8.6.5$'; then \
         sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
     fi && \
+    if stack path --compiler-exe | grep -q 'ghc-8.10.4$'; then \
+        sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
+    fi && \
     exit $success
 
 #-- almost done; pre-download snapshot index for speed [+1.29 GiB]
