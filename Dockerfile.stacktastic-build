@@ -33,6 +33,7 @@ RUN apt-get update -y && \
       libc-dev \
       libgmp-dev \
       liblzma-dev \
+      libczmq-dev \
       libpq-dev \
       libsecp256k1-dev \
       libssl-dev \
