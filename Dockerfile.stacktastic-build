@@ -37,6 +37,8 @@ RUN apt-get update -y && \
       libpq-dev \
       libsecp256k1-dev \
       libssl-dev \
+      libtinfo6 \
+      libtinfo-dev \
       make \
       perl \
       pkg-config \
