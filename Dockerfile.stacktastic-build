@@ -12,7 +12,7 @@
 #--     Dockerfile.stacktastic-build
 
 # Buster == 10.6, current stable in 2020
-FROM debian:buster
+FROM debian:buster@sha256:8414aa82208bc4c2761dc149df67e25c6b8a9380e5d8c4e7b5c84ca2d04bb244
 
 # NOTE on Ubuntu (only), there're issues like this:
 #   https://github.com/finkel-lang/finkel/issues/2
@@ -27,6 +27,7 @@ RUN apt-get update -y && \
       ca-certificates \
       curl \
       gcc \
+      g++ \
       git \
       gnupg \
       jq \
@@ -105,7 +106,7 @@ RUN \
     if stack path --compiler-exe | grep -q 'ghc-8.6.5$'; then \
         sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
     fi && \
-    if stack path --compiler-exe | grep -q 'ghc-8.10.4$'; then \
+    if stack path --compiler-exe | grep -q 'ghc-8.10.7$'; then \
         sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
     fi && \
     exit $success
