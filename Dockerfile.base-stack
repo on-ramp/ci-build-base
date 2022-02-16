@@ -13,25 +13,31 @@ FROM fpco/stack-build-small:$STACK_RESOLVER as base
 #-- install basic deps
 RUN apt-get update -y && \
     apt-get install -yq --no-install-recommends \
-      libpq-dev \
+      ca-certificates \
+      curl \
+      gcc \
+      g++ \
+      git \
+      gnupg \
+      jq \
+      libc-dev \
+      libgmp-dev \
       liblzma-dev \
       libczmq-dev \
-      libssl-dev \
+      libpq-dev \
       libsecp256k1-dev \
+      libssl-dev \
+      libtinfo6 \
+      libtinfo-dev \
+      make \
+      perl \
+      pkg-config \
       ssh \
-      git \
-      curl \
-      gpg \
-      jq \
+      sudo \
+      xz-utils \
+      zlib1g-dev \
     ; rm -rf /var/cache/apt/lists
 
-#-- install Kustomize
-WORKDIR /usr/local/bin
-# hadolint ignore=DL4006
-RUN export URL="https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"; \
-    curl -fsSL "$URL" | bash; \
-    kustomize version
 
-WORKDIR /opt
 
 
