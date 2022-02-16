@@ -8,7 +8,7 @@
 # image).
 ARG STACK_RESOLVER=lts-14.27
 
-FROM fpco/stack-build-small:$STACK_RESOLVER as base
+FROM fpco/stack-build-small:$STACK_RESOLVER
 
 #-- install basic deps
 RUN apt-get update -y && \
@@ -27,7 +27,6 @@ RUN apt-get update -y && \
       libpq-dev \
       libsecp256k1-dev \
       libssl-dev \
-      libtinfo6 \
       libtinfo-dev \
       make \
       perl \
@@ -36,8 +35,9 @@ RUN apt-get update -y && \
       sudo \
       xz-utils \
       zlib1g-dev \
-    ; rm -rf /var/cache/apt/lists
+    ;
 
+WORKDIR /opt
 
-
+CMD ["bash"]
 
