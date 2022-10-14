@@ -1,0 +1,8 @@
+FROM amazon/aws-cli:latest
+
+RUN curl -fsSL -o /usr/local/bin/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 \
+ && curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 \
+ && chmod +x /usr/local/bin/*
+
+ENTRYPOINT ["/bin/bash"]
+

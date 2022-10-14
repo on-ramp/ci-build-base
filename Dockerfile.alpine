@@ -1,0 +1,14 @@
+FROM alpine:latest as build
+
+RUN apk add curl bash
+RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+
+
+FROM alpine:latest
+
+COPY --from=build /kustomize /usr/bin/
+
+RUN apk add --no-cache bash git openssh openssl
+
+ENTRYPOINT ["/bin/bash"]
+
