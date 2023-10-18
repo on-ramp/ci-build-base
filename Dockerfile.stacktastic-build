@@ -3,7 +3,7 @@
 #-- Installs Stack from official signed binary,
 #--   then GHC from FPCO bindist (via stack setup).
 #--
-#-- Preconfigured to produce static binaries.
+#-- (Meant to be) preconfigured to produce static binaries.
 #--
 #-- Usage:
 #--   docker build \
@@ -11,8 +11,7 @@
 #--     --build-arg STACK_RESOLVER=lts-16.19 \
 #--     Dockerfile.stacktastic-build
 
-# Buster == 10.6, current stable in 2020
-FROM debian:buster@sha256:8414aa82208bc4c2761dc149df67e25c6b8a9380e5d8c4e7b5c84ca2d04bb244
+FROM debian:stable-slim
 
 # NOTE on Ubuntu (only), there're issues like this:
 #   https://github.com/finkel-lang/finkel/issues/2
@@ -21,9 +20,10 @@ LABEL vendor="Coinweb Ltd."
 
 ENV LC_ALL=C.UTF-8
 
+
 #-- install basic deps
-RUN apt-get update -y && \
-    apt-get install -yq --no-install-recommends \
+RUN apt-get update --allow-releaseinfo-change -y && \
+    apt-get install -yq --no-install-recommends --no-install-suggests \
       ca-certificates \
       curl \
       gcc \
@@ -50,14 +50,22 @@ RUN apt-get update -y && \
     ; rm -rf /var/cache/apt/lists
     # [+253 MiB]
 
-#-- install Stack
-ARG STACK_VERSION=2.5.1
-ARG STACK_RESOLVER=lts-16.19
+#-- install postgresql-client source
+ARG POSTGRES_VERSION=14
+RUN echo "deb http://apt.postgresql.org/pub/repos/apt $(env -i bash -c '. /etc/os-release; echo $VERSION_CODENAME')-pgdg main" | tee /etc/apt/sources.list.d/postgresql.list; \
+    [ -f /etc/apt/trusted.gpg.d/postgresql.gpg ] && rm /etc/apt/trusted.gpg.d/postgresql.gpg; \
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg; \
+    apt-get update --allow-releaseinfo-change -y && apt-get install -yq --no-install-recommends --no-install-suggests postgresql-client-$POSTGRES_VERSION; \
+    rm -rf /var/cache/apt/lists
+
+#-- install stack
+ARG STACK_VERSION=2.13.1
+ARG STACK_RESOLVER=lts-18.28
 ENV STACK_BIN=https://github.com/commercialhaskell/stack/releases/download/v${STACK_VERSION}/stack-${STACK_VERSION}-linux-x86_64-bin
 WORKDIR /usr/local/share
-COPY stack-${STACK_VERSION}-linux-x86_64-bin.sha256 \
-     stack-${STACK_VERSION}-linux-x86_64-bin.asc \
-     GPG-KEY-575159689BEFB442-dev@fpcomplete \
+COPY ./stack/stack-${STACK_VERSION}-linux-x86_64-bin.sha256 \
+     ./stack/stack-${STACK_VERSION}-linux-x86_64-bin.asc \
+     ./stack/GPG-KEY-575159689BEFB442-dev@fpcomplete \
      ./
 # hadolint ignore=DL4006
 RUN curl -fsSL "$STACK_BIN" -o ${STACK_BIN##*/} && \
@@ -72,7 +80,7 @@ RUN curl -fsSL "$STACK_BIN" -o ${STACK_BIN##*/} && \
     stack --version
     # [+60 MiB]
 
-#-- install Kustomize
+#-- install kustomize
 # hadolint ignore=DL4006
 RUN export URL="https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"; \
     ( cd /usr/local/bin && curl -fsSL "$URL" | bash; ); \
@@ -80,43 +88,40 @@ RUN export URL="https://raw.githubusercontent.com/kubernetes-sigs/kustomize/mast
 
 #-- drop root
 # hadolint ignore=SC2016
-RUN adduser --disabled-password --uid 1000 --system builder && \
+RUN adduser --disabled-password --uid 1000 builder && \
     echo 'builder ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/enable-builder-sudo && \
     chmod 0440 /etc/sudoers.d/enable-builder-sudo && \
     echo 'test -d "$HOME/bin" && [ "${PATH#*$HOME/bin}" == "$PATH" ] && export PATH="$PATH:$HOME/bin"' > /etc/profile.d/add-home-bin-to-PATH.sh && \
     echo 'export PATH="$PATH:$(stack path --compiler-bin)"' > /etc/profile.d/add-stack-ghc-to-PATH.sh && \
-    :
+    # debian does not source /etc/profile in ~/.bashrc
+    echo 'source /etc/profile' >> /home/builder/.bashrc
+
 USER builder
 WORKDIR /home/builder
 
-#-- configure Stack, pull a GHC, strip it down [+1.34 GiB]
-COPY stack-config.yaml /tmp/
-RUN \
-    install -Dm644 /tmp/stack-config.yaml /home/builder/.stack/config.yaml && \
+#-- configure Stack, pull a GHC, strip it down [+1.86 GiB]
+ARG GHC_VERSION=8.10.7
+COPY ./stack/stack-config.yaml /tmp/
+RUN install -Dm644 /tmp/stack-config.yaml /home/builder/.stack/config.yaml; \
     stack setup \
         --install-ghc \
         --resolver=$STACK_RESOLVER \
         $GHC_VERSION \
-        ; success=$?; \
+        ; \
     rm -rf ~/.stack/programs/*/ghc-*.tar.xz \
            ~/.stack/programs/*/ghc-*/share/doc \
         ; \
-    strip ~/.stack/programs/*/ghc-*/lib/ghc-*/bin/* \
-        ; \
-    if stack path --compiler-exe | grep -q 'ghc-8.6.5$'; then \
-        sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
-    fi && \
-    if stack path --compiler-exe | grep -q 'ghc-8.10.7$'; then \
-        sed -i 's!\(- --enable-executable-static\)!#\1 # requires Cabal 3.0+!' /home/builder/.stack/config.yaml; \
-    fi && \
-    exit $success
+    strip ~/.stack/programs/*/ghc-*/lib/ghc-*/bin/*
 
-#-- almost done; pre-download snapshot index for speed [+1.29 GiB]
+#-- almost done; pre-download snapshot index for speed [+1.86 GiB]
 RUN stack update
 
 #-- add correctly permissioned volumes for host code, build outputs, build cache
 RUN mkdir -v src bin
 VOLUME /home/builder/src
 VOLUME /home/builder/bin
-VOLUME /home/builder/.stack/snapshots
+#-- stack for some reason leaves snapshots directory under root ownership
+# RUN sudo chown -R builder:builder /home/builder/.stack
+#VOLUME /home/builder/.stack/snapshots
+
 WORKDIR /home/builder/src

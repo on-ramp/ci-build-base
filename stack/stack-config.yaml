@@ -13,7 +13,7 @@ configure-options:
   $everything:
     - --enable-static
     - --disable-executable-dynamic
-    - --enable-executable-static
+#    - --enable-executable-static
 
 #-- supposed to link smaller binaries, but actually gives
 #-- "Argument list is too long" errors. experimental feature :/
